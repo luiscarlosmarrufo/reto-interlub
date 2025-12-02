@@ -6,8 +6,15 @@ from sklearn.preprocessing import StandardScaler
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly import colors
 import nltk
 from nltk.corpus import stopwords
+
+# ------------------- PALETA Y ESTILO GLOBAL -------------------
+PRIMARY_RED = "#FF0000"   # rojo Interlub
+DARK_GREY   = "#333333"   # texto principal
+LIGHT_GREY  = "#F2F2F2"   # fondo sidebar / bloques
+BACKGROUND  = "#FFFFFF"   # fondo principal
 
 # Descargar stopwords si es necesario
 try:
@@ -23,397 +30,152 @@ st.set_page_config(
     layout="wide"
 )
 
-# Aplicar CSS personalizado
-st.markdown("""
+# === CSS GLOBAL: VISIBILIDAD + ESTILO INTERLUB ===
+st.markdown(
+    f"""
     <style>
-    /* Forzar fondo blanco en toda la aplicación */
-    .stApp {
+    :root {{
+        --primary-color: {PRIMARY_RED};
+        --text-color: {DARK_GREY};
+        --bg-color: {BACKGROUND};
+        --sidebar-bg: {LIGHT_GREY};
+    }}
+
+    /* Fondo general y tipografía */
+    .stApp {{
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }}
+
+    /* Quitar barra superior oscura de Streamlit */
+    header[data-testid="stHeader"] {{
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        box-shadow: none;
+    }}
+    header[data-testid="stHeader"] * {{
+        color: var(--text-color) !important;
+    }}
+
+    /* SIDEBAR: más contraste, todo legible */
+    section[data-testid="stSidebar"] {{
+        background-color: var(--sidebar-bg);
+        border-right: 1px solid #E0E0E0;
+    }}
+    section[data-testid="stSidebar"] * {{
+        color: {DARK_GREY} !important;
+        font-size: 0.93rem;
+    }}
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3 {{
+        font-weight: 700;
+        margin-top: 0.8rem;
+        margin-bottom: 0.5rem;
+    }}
+
+    /* Inputs del sidebar SIEMPRE blancos */
+    section[data-testid="stSidebar"] input,
+    section[data-testid="stSidebar"] textarea {{
         background-color: #FFFFFF !important;
-    }
-    
-    .main {
-        background-color: #FFFFFF !important;
-    }
-    
-    .block-container {
-        background-color: #FFFFFF !important;
-    }
-    
-    /* Colores principales */
-    :root {
-        --primary-color: #CC0000;
-        --background-color: #FFFFFF;
-        --secondary-bg: #F0F0F0;
-        --text-color: #2B2B2B;
-        --text-light: #666666;
-    }
-    
-    /* Botones principales */
-    .stButton>button {
-        background-color: #CC0000 !important;
-        color: #FFFFFF !important;
-        border: 2px solid #CC0000 !important;
+        color: {DARK_GREY} !important;
         border-radius: 8px !important;
-        padding: 0.6rem 1.5rem !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 2px 4px rgba(204, 0, 0, 0.2) !important;
-    }
-    
-    .stButton>button:hover {
-        background-color: #990000 !important;
-        border-color: #990000 !important;
-        color: #FFFFFF !important;
-        box-shadow: 0 4px 8px rgba(204, 0, 0, 0.3) !important;
-        transform: translateY(-1px) !important;
-    }
-    
-    .stButton>button:active {
-        background-color: #660000 !important;
-        transform: translateY(0) !important;
-    }
-    
-    /* Headers */
-    h1, h2, h3, h4, h5, h6 {
-        color: #2B2B2B !important;
-        font-weight: 600 !important;
-    }
-    
-    h1 {
-        border-bottom: 4px solid #CC0000 !important;
-        padding-bottom: 15px !important;
-        margin-bottom: 20px !important;
-    }
-    
-    h2 {
-        color: #2B2B2B !important;
-        margin-top: 1.5rem !important;
-        font-size: 1.5rem !important;
-    }
-    
-    h3 {
-        color: #2B2B2B !important;
-        font-size: 1.25rem !important;
-    }
-    
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background-color: #F8F8F8 !important;
-        border-right: 1px solid #E0E0E0 !important;
-    }
-    
-    [data-testid="stSidebar"] h1, 
-    [data-testid="stSidebar"] h2, 
-    [data-testid="stSidebar"] h3 {
-        color: #2B2B2B !important;
-        font-weight: 600 !important;
-    }
-    
-    [data-testid="stSidebar"] label {
-        color: #2B2B2B !important;
-        font-weight: 600 !important;
-        font-size: 0.95rem !important;
-    }
-    
-    [data-testid="stSidebar"] p {
-        color: #2B2B2B !important;
-    }
-    
-    /* Métricas */
-    [data-testid="stMetricValue"] {
-        color: #CC0000 !important;
-        font-weight: 700 !important;
-        font-size: 2rem !important;
-    }
-    
-    [data-testid="stMetricLabel"] {
-        color: #2B2B2B !important;
-        font-weight: 600 !important;
-        font-size: 0.9rem !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-    }
-    
-    /* Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px !important;
+    }}
+    section[data-testid="stSidebar"] select {{
         background-color: #FFFFFF !important;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        background-color: #F0F0F0 !important;
-        color: #2B2B2B !important;
-        border-radius: 8px 8px 0 0 !important;
-        font-weight: 600 !important;
-        padding: 12px 24px !important;
-        border: 2px solid transparent !important;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background-color: #CC0000 !important;
-        color: #FFFFFF !important;
-        font-weight: 700 !important;
-        border: 2px solid #CC0000 !important;
-    }
-    
-    /* Selectbox y inputs */
-    .stSelectbox label, 
-    .stNumberInput label, 
-    .stMultiSelect label,
-    .stTextInput label,
-    .stSlider label {
-        color: #2B2B2B !important;
-        font-weight: 600 !important;
-        font-size: 0.95rem !important;
-    }
-    
-    .stSelectbox div[data-baseweb="select"] {
-        background-color: #FFFFFF !important;
-        border: 2px solid #E0E0E0 !important;
-        border-radius: 6px !important;
-    }
-    
-    .stSelectbox div[data-baseweb="select"]:hover {
-        border-color: #CC0000 !important;
-    }
-    
-    .stSelectbox div[data-baseweb="select"] > div {
-        color: #2B2B2B !important;
-        font-weight: 500 !important;
-    }
-    
-    /* Number input */
-    .stNumberInput input {
-        color: #2B2B2B !important;
-        background-color: #FFFFFF !important;
-        border: 2px solid #E0E0E0 !important;
-        border-radius: 6px !important;
-        font-weight: 500 !important;
-    }
-    
-    .stNumberInput input:focus {
-        border-color: #CC0000 !important;
-        box-shadow: 0 0 0 1px #CC0000 !important;
-    }
-    
-    /* Dataframes */
-    .dataframe {
-        border: 2px solid #E0E0E0 !important;
-        color: #2B2B2B !important;
-        background-color: #FFFFFF !important;
+        color: {DARK_GREY} !important;
         border-radius: 8px !important;
-        overflow: hidden !important;
-    }
-    
-    .dataframe th {
-        background-color: #F8F8F8 !important;
-        color: #2B2B2B !important;
-        font-weight: 700 !important;
-        padding: 12px !important;
-        border-bottom: 2px solid #E0E0E0 !important;
-    }
-    
-    .dataframe td {
-        color: #2B2B2B !important;
-        padding: 10px !important;
+    }}
+
+    /* Select / multiselect blancos (baseweb) */
+    div[data-baseweb="select"] > div {{
         background-color: #FFFFFF !important;
-    }
-    
-    .dataframe tr:hover {
-        background-color: #FFF5F5 !important;
-    }
-    
-    /* Expander */
-    .streamlit-expanderHeader {
-        background-color: #F8F8F8 !important;
-        color: #2B2B2B !important;
-        border-left: 4px solid #CC0000 !important;
-        font-weight: 600 !important;
-        border-radius: 6px !important;
-        padding: 12px !important;
-    }
-    
-    .streamlit-expanderHeader:hover {
-        background-color: #F0F0F0 !important;
-    }
-    
-    .streamlit-expanderContent {
-        background-color: #FFFFFF !important;
-        color: #2B2B2B !important;
-        border: 1px solid #E0E0E0 !important;
-        border-top: none !important;
-        padding: 15px !important;
-    }
-    
-    /* Info boxes */
-    .stAlert {
-        color: #2B2B2B !important;
+        color: {DARK_GREY} !important;
         border-radius: 8px !important;
-        padding: 15px !important;
-        font-weight: 500 !important;
-    }
-    
-    div[data-baseweb="notification"] {
-        background-color: #F8F8F8 !important;
-        color: #2B2B2B !important;
-        border-left: 4px solid #CC0000 !important;
-        border-radius: 6px !important;
-    }
-    
-    /* Radio buttons */
-    .stRadio > label {
-        color: #2B2B2B !important;
-        font-weight: 600 !important;
-        font-size: 0.95rem !important;
-    }
-    
-    .stRadio label[data-baseweb="radio"] span {
-        color: #2B2B2B !important;
-        font-weight: 500 !important;
-    }
-    
-    .stRadio [data-baseweb="radio"] > div:first-child {
-        border-color: #CC0000 !important;
-    }
-    
-    /* Slider */
-    .stSlider label {
-        color: #2B2B2B !important;
-        font-weight: 600 !important;
-    }
-    
-    .stSlider [data-baseweb="slider"] [role="slider"] {
-        background-color: #CC0000 !important;
-    }
-    
-    .stSlider [data-baseweb="slider"] {
-        background: linear-gradient(to right, #CC0000 0%, #CC0000 var(--value), #E0E0E0 var(--value), #E0E0E0 100%) !important;
-    }
-    
-    /* Links */
-    a {
-        color: #CC0000 !important;
-        font-weight: 600 !important;
-        text-decoration: none !important;
-    }
-    
-    a:hover {
-        color: #990000 !important;
-        text-decoration: underline !important;
-    }
-    
-    /* Mensajes */
-    .stWarning {
-        background-color: #FFF8E1 !important;
-        color: #2B2B2B !important;
-        border-left: 4px solid #FFA000 !important;
-        border-radius: 6px !important;
-        padding: 15px !important;
-    }
-    
-    .stSuccess {
-        background-color: #F1F8E9 !important;
-        color: #2B2B2B !important;
-        border-left: 4px solid #66BB6A !important;
-        border-radius: 6px !important;
-        padding: 15px !important;
-    }
-    
-    .stError {
-        background-color: #FFEBEE !important;
-        color: #2B2B2B !important;
-        border-left: 4px solid #EF5350 !important;
-        border-radius: 6px !important;
-        padding: 15px !important;
-    }
-    
-    .stInfo {
-        background-color: #E3F2FD !important;
-        color: #2B2B2B !important;
-        border-left: 4px solid #42A5F5 !important;
-        border-radius: 6px !important;
-        padding: 15px !important;
-    }
-    
-    /* Texto general */
-    p, span, div, li {
-        color: #2B2B2B !important;
-    }
-    
-    /* Markdown */
-    .stMarkdown {
-        color: #2B2B2B !important;
-    }
-    
-    /* JSON display */
-    .stJson {
-        background-color: #F8F8F8 !important;
-        color: #2B2B2B !important;
-        border: 1px solid #E0E0E0 !important;
-        border-radius: 6px !important;
-        padding: 15px !important;
-    }
-    
-    /* Code blocks */
-    code {
-        background-color: #F8F8F8 !important;
-        color: #CC0000 !important;
-        padding: 3px 6px !important;
-        border-radius: 4px !important;
-        font-weight: 600 !important;
-    }
-    
-    /* Multi-select */
-    .stMultiSelect label {
-        color: #2B2B2B !important;
-        font-weight: 600 !important;
-    }
-    
-    .stMultiSelect div[data-baseweb="tag"] {
-        background-color: #CC0000 !important;
-        color: #FFFFFF !important;
-        font-weight: 600 !important;
-        border-radius: 4px !important;
-    }
-    
-    /* Divider */
-    hr {
-        border-color: #E0E0E0 !important;
-        border-width: 2px !important;
-        margin: 2rem 0 !important;
-    }
-    
-    /* Tooltips */
-    [data-baseweb="tooltip"] {
-        background-color: #2B2B2B !important;
-        color: #FFFFFF !important;
-        border-radius: 6px !important;
-        padding: 8px 12px !important;
-    }
-    
-    /* Placeholder text */
-    ::placeholder {
-        color: #999999 !important;
-    }
-    
-    /* Disabled elements */
-    :disabled {
-        color: #CCCCCC !important;
-        background-color: #F5F5F5 !important;
-    }
-    
-    /* Líneas de separación */
-    [data-testid="stHorizontalBlock"] {
+    }}
+    div[data-baseweb="select"] [class*="placeholder"] {{
+        color: #777777 !important;
+    }}
+
+    /* Menú desplegable del select */
+    div[data-baseweb="popover"] div[role="listbox"] {{
         background-color: #FFFFFF !important;
-    }
-    
-    /* Columnas */
-    [data-testid="column"] {
-        background-color: #FFFFFF !important;
-    }
+        color: {DARK_GREY} !important;
+    }}
+
+    /* Botones tipo CTA rojo – texto blanco */
+    .stButton>button, .stDownloadButton>button {{
+        background-color: {PRIMARY_RED};
+        border-radius: 999px;
+        border: none;
+        padding: 0.45rem 1.4rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }}
+    .stButton>button, .stDownloadButton>button,
+    .stButton>button *, .stDownloadButton>button * {{
+        color: #FFFFFF !important;
+    }}
+    .stButton>button:hover, .stDownloadButton>button:hover {{
+        filter: brightness(0.92);
+    }}
+
+    /* Títulos principales tipo Interlub */
+    h1, h2, h3, h4 {{
+        color: var(--text-color);
+        font-weight: 800;
+    }}
+
+    .hero-title {{
+        font-size: 4rem;
+        font-weight: 900;
+        line-height: 1.05;
+        color: {DARK_GREY};
+        margin-bottom: 0.5rem;
+    }}
+
+    .hero-subtitle {{
+        font-size: 1.25rem;
+        color: #555555;
+        margin-bottom: 1.5rem;
+        max-width: 720px;
+    }}
+
+    .hero-dot {{
+        color: {PRIMARY_RED};
+    }}
+
+    /* Expanders (banners) siempre claros */
+    div[data-testid="stExpander"] > details > summary {{
+        background-color: #F7F7F7 !important;
+        color: {DARK_GREY} !important;
+        border-radius: 12px !important;
+    }}
+    div[data-testid="stExpander"] > details > summary:hover {{
+        background-color: #ECECEC !important;
+    }}
+
+    /* Métricas más limpias */
+    div[data-testid="stMetricValue"] {{
+        color: {DARK_GREY};
+        font-weight: 700;
+    }}
+    div[data-testid="stMetricLabel"] {{
+        color: #666666;
+    }}
+
+    .stAlert > div {{
+        border-radius: 10px;
+    }}
+
+    .stDataFrame, .stTable {{
+        background-color: #FFFFFF;
+    }}
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
 # ==================== FUNCIONES DE CARGA Y PREPROCESAMIENTO ====================
 
@@ -535,17 +297,6 @@ def recomendar_grasas_hibrido(
 ):
     """
     Recomienda grasas similares usando el método híbrido.
-    
-    Args:
-        codigo_grasa: Código de la grasa de referencia
-        data_dict: Diccionario con los datos preprocesados
-        top_n: Número de recomendaciones
-        modo: "texto", "numerico" o "hibrido"
-        peso_texto: Peso para similitud de texto (default: 0.7)
-        peso_numerico: Peso para similitud numérica (default: 0.3)
-    
-    Returns:
-        DataFrame con las recomendaciones
     """
     indices = data_dict['indices']
     df_features = data_dict['df_features']
@@ -608,18 +359,6 @@ def recomendar_por_filtros(
 ):
     """
     Recomienda grasas basándose en filtros de especificaciones técnicas.
-    
-    Args:
-        df: DataFrame con los datos de grasas
-        grado_nlgi: Grado NLGI deseado (puede ser lista)
-        temp_min_trabajo: Temperatura mínima de operación requerida
-        temp_max_trabajo: Temperatura máxima de operación requerida
-        carga_timken_min: Carga Timken mínima requerida
-        requiere_nsf: 1 para requerir NSF, 0 para no NSF, None para no filtrar
-        top_n: Número de resultados
-    
-    Returns:
-        DataFrame con las grasas filtradas
     """
     base = df.copy()
     mask = pd.Series(True, index=base.index)
@@ -664,18 +403,37 @@ def recomendar_por_filtros(
 # ==================== INTERFAZ DE USUARIO ====================
 
 def main():
-    # Título principal
-    st.title("Recomendador Inteligente de Grasas Interlub")
-    st.markdown("---")
-    
+    # ----- HERO PRINCIPAL ESTILO INTERLUB -----
+    col_hero_text, col_hero_img = st.columns([2, 1])
+
+    with col_hero_text:
+        st.markdown(
+            """
+            <div class="hero-title">
+            Tu proceso de selección de grasas no es común.<br>
+            Nuestro recomendador tampoco<span class="hero-dot">.</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<div class="hero-subtitle">'
+            'Encuentra en segundos las grasas Interlub que mejor se ajustan a tus equipos, '
+            'combinando experiencia técnica e inteligencia de datos.'
+            '</div>',
+            unsafe_allow_html=True,
+        )
+
+    with col_hero_img:
+        st.image("Tambor_Interlub_Flotado.png", use_container_width=True)
+        
     # Cargar datos
-    # NOTA: Cambiar esta ruta por la ubicación de tu archivo CSV
-    csv_path = "datos_grasas_Tec_limpio.csv"  # Modificar según tu estructura
+    csv_path = "datos_grasas_Tec_limpio.csv"
     
     data_dict = load_and_preprocess_data(csv_path)
     
     if data_dict is None:
-        st.error(" No se pudieron cargar los datos. Verifica la ruta del archivo CSV.")
+        st.error("No se pudieron cargar los datos. Verifica la ruta del archivo CSV.")
         st.info("Coloca tu archivo 'datos_grasas_Tec_limpio.csv' en el mismo directorio que este script.")
         return
     
@@ -684,51 +442,54 @@ def main():
     
     # ===== SIDEBAR =====
     with st.sidebar:
-        st.header("Método de Búsqueda")
+        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+
+        st.image("Interlub_Logo_Negro.svg", width=160)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.header("Método de búsqueda")
+        st.caption(
+            "Elige si quieres partir de una grasa de referencia o de las condiciones de operación."
+        )
         
         metodo_busqueda = st.radio(
             "Selecciona el método:",
             ["Búsqueda por Similitud", "Búsqueda por Filtros"],
-            help="Similitud: encuentra grasas parecidas a una existente. Filtros: busca por especificaciones técnicas."
+            help="Similitud: encuentras alternativas a una grasa existente. Filtros: partes de requisitos técnicos."
         )
-        
-        st.markdown("---")
         
         # ===== BÚSQUEDA POR SIMILITUD =====
         if metodo_busqueda == "Búsqueda por Similitud":
-            st.subheader("Configuración de Similitud")
+            st.subheader("Configuración de similitud")
             
-            # Seleccionar grasa de referencia
             grasa_referencia = st.selectbox(
                 "Grasa de referencia:",
                 options=df_features.index.tolist(),
-                help="Selecciona una grasa del catálogo para encontrar similares"
+                help="Usa la grasa que hoy empleas o la más cercana al caso que quieres resolver."
             )
             
-            # Modo de similitud
             modo_similitud = st.selectbox(
                 "Modo de similitud:",
                 ["hibrido", "texto", "numerico"],
-                help="Híbrido combina texto y propiedades numéricas"
+                help="El modo híbrido combina descripción y datos técnicos (recomendado)."
             )
             
-            # Pesos (solo si es híbrido)
             if modo_similitud == "hibrido":
                 st.markdown("**Ajustar pesos:**")
                 peso_texto = st.slider(
-                    "Peso Texto (descripción):",
+                    "Peso texto (descripción):",
                     min_value=0.0,
                     max_value=1.0,
                     value=0.7,
                     step=0.1
                 )
                 peso_numerico = 1.0 - peso_texto
-                st.info(f"Peso Numérico: {peso_numerico:.1f}")
+                st.info(f"Peso numérico: {peso_numerico:.1f}")
             else:
                 peso_texto = 0.7
                 peso_numerico = 0.3
             
-            # Número de recomendaciones
             top_n = st.slider(
                 "Número de recomendaciones:",
                 min_value=3,
@@ -737,52 +498,48 @@ def main():
             )
             
             buscar_btn = st.button(
-                " Buscar Similares",
+                "Ver recomendaciones",
                 use_container_width=True,
                 type="primary"
             )
             
         # ===== BÚSQUEDA POR FILTROS =====
         else:
-            st.subheader(" Especificaciones Técnicas")
+            st.subheader("Especificaciones técnicas")
             
-            # NLGI
             grado_nlgi_options = sorted(df["Grado NLGI Consistencia"].dropna().unique())
             grado_nlgi = st.multiselect(
                 "Grado NLGI:",
                 options=grado_nlgi_options,
-                help="Selecciona uno o más grados NLGI"
+                help="Selecciona uno o más grados de consistencia."
             )
             
-            # Temperaturas
             col1, col2 = st.columns(2)
             with col1:
                 temp_min = st.number_input(
-                    "Temp. Mín. (°C):",
+                    "Temperatura mínima del equipo (°C):",
                     value=None,
-                    help="La grasa debe soportar esta temperatura mínima"
+                    help="Temperatura mínima de operación."
                 )
             with col2:
                 temp_max = st.number_input(
-                    "Temp. Máx. (°C):",
+                    "Temperatura máxima del equipo (°C):",
                     value=None,
-                    help="La grasa debe soportar esta temperatura máxima"
+                    help="Temperatura máxima de operación."
                 )
             
-            # Carga Timken
             carga_timken = st.number_input(
-                "Carga Timken mín. (lb):",
+                "Carga Timken mínima (lb):",
                 min_value=0.0,
                 value=None,
-                help="Carga mínima requerida"
+                help="Carga mínima requerida para el contacto."
             )
             
-            # NSF
             requiere_nsf = st.selectbox(
                 "Registro NSF:",
                 options=[None, 1, 0],
                 format_func=lambda x: "No importa" if x is None else ("Sí requiere" if x == 1 else "No requiere"),
-                help="Para industria alimenticia"
+                help="Selecciona 'Sí requiere' para aplicaciones en entorno alimenticio."
             )
             
             top_n = st.slider(
@@ -793,14 +550,12 @@ def main():
             )
             
             buscar_btn = st.button(
-                "🔎 Buscar por Filtros",
+                "Buscar grasas",
                 use_container_width=True,
                 type="primary"
             )
         
-        # Estadísticas
-        st.markdown("---")
-        st.header(" Estadísticas")
+        st.header("Estadísticas")
         st.metric("Grasas en catálogo", len(df))
         st.metric("Características", len(df.columns))
     
@@ -809,8 +564,11 @@ def main():
     if buscar_btn:
         try:
             if metodo_busqueda == "Búsqueda por Similitud":
-                # Ejecutar búsqueda por similitud
-                st.header(f" Grasas Similares a: {grasa_referencia}")
+                st.header(f"Opciones recomendadas a partir de: {grasa_referencia}")
+                st.caption(
+                    "Estas grasas comparten características clave con tu referencia. "
+                    "Revisa siempre la ficha técnica antes de hacer un cambio en campo."
+                )
                 
                 recomendaciones = recomendar_grasas_hibrido(
                     codigo_grasa=grasa_referencia,
@@ -821,46 +579,58 @@ def main():
                     peso_numerico=peso_numerico
                 )
                 
-                # Mostrar grasa de referencia
-                with st.expander(" Ver detalles de la grasa de referencia", expanded=True):
+                with st.expander("Ver detalles de la grasa de referencia", expanded=True):
+                    st.markdown(
+                        "Resumen técnico de la grasa con la que estás comparando. "
+                        "Úsalo para validar que el comparativo hace sentido con tu aplicación."
+                    )
                     ref_data = df[df["codigoGrasa"] == grasa_referencia].iloc[0]
                     col1, col2, col3 = st.columns(3)
                     
                     with col1:
-                        st.metric("Aceite Base", ref_data.get("Aceite Base", "N/A"))
+                        st.metric("Aceite base", ref_data.get("Aceite Base", "N/A"))
                         st.metric("Espesante", ref_data.get("Espesante", "N/A"))
                     with col2:
-                        st.metric("NLGI", ref_data.get("Grado NLGI Consistencia", "N/A"))
-                        st.metric("Viscosidad 40°C", f"{ref_data.get('Viscosidad del Aceite Base a 40°C. cSt', 0):.1f} cSt")
+                        st.metric("Grado NLGI", ref_data.get("Grado NLGI Consistencia", "N/A"))
+                        st.metric(
+                            "Viscosidad 40°C",
+                            f"{ref_data.get('Viscosidad del Aceite Base a 40°C. cSt', 0):.1f} cSt"
+                        )
                     with col3:
-                        st.metric("Temp. Mín.", f"{ref_data.get('Temperatura de Servicio °C, min', 0)}°C")
-                        st.metric("Temp. Máx.", f"{ref_data.get('Temperatura de Servicio °C, max', 0)}°C")
+                        st.metric("Temp. mín.", f"{ref_data.get('Temperatura de Servicio °C, min', 0)}°C")
+                        st.metric("Temp. máx.", f"{ref_data.get('Temperatura de Servicio °C, max', 0)}°C")
                 
-                # Gráfico de similitudes
-                st.subheader("Nivel de Similitud")
+                st.subheader("Nivel de similitud")
                 fig = px.bar(
                     recomendaciones,
                     x='Similitud',
                     y='codigoGrasa',
                     orientation='h',
-                    title=f'Top {top_n} Grasas Más Similares (Modo: {modo_similitud})',
+                    title=f'Top {top_n} grasas más similares (modo: {modo_similitud})',
                     labels={'codigoGrasa': 'Código', 'Similitud': 'Similitud'},
                     color='Similitud',
-                    color_continuous_scale=['#FFE5E5', '#CC0000', '#660000']
+                    color_continuous_scale=[[0, "#FFE5E5"], [1, PRIMARY_RED]]
                 )
                 fig.update_layout(
-                    yaxis={'categoryorder':'total ascending'},
-                    plot_bgcolor='#FFFFFF',
-                    paper_bgcolor='#FFFFFF',
-                    font=dict(color='#2B2B2B', size=12),
-                    title_font=dict(color='#2B2B2B', size=16, family='sans-serif')
+                    yaxis={'categoryorder': 'total ascending'},
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    font_color=DARK_GREY,
+                    title_font_color=DARK_GREY,
                 )
-                fig.update_xaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
-                fig.update_yaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
+                fig.update_xaxes(
+                    color=DARK_GREY,
+                    tickfont=dict(color=DARK_GREY),
+                    title_font=dict(color=DARK_GREY)
+                )
+                fig.update_yaxes(
+                    color=DARK_GREY,
+                    tickfont=dict(color=DARK_GREY),
+                    title_font=dict(color=DARK_GREY)
+                )
                 st.plotly_chart(fig, use_container_width=True)
                 
-                # Tabla de resultados
-                st.subheader(" Detalles de las Recomendaciones")
+                st.subheader("Detalles de las recomendaciones")
                 
                 columnas_mostrar = [
                     'codigoGrasa', 'Similitud', 'subtitulo',
@@ -871,13 +641,17 @@ def main():
                     'Temperatura de Servicio °C, max'
                 ]
                 
-                # Filtrar columnas existentes
                 columnas_mostrar = [c for c in columnas_mostrar if c in recomendaciones.columns]
                 display_df = recomendaciones[columnas_mostrar].copy()
                 
-                # Formatear similitud
                 if 'Similitud' in display_df.columns:
                     display_df['Similitud'] = display_df['Similitud'].apply(lambda x: f"{x:.3f}")
+                
+                display_df = display_df.rename(columns={
+                    "subtitulo": "Descripción corta",
+                    "Grado NLGI Consistencia": "Grado NLGI",
+                    "Punto de Gota, °C": "Punto de gota (°C)",
+                })
                 
                 st.dataframe(
                     display_df,
@@ -885,10 +659,9 @@ def main():
                     hide_index=True
                 )
                 
-            else:  # Búsqueda por filtros
-                st.header(" Resultados de Búsqueda por Filtros")
+            else:
+                st.header("Grasas que cumplen con los requisitos de tu aplicación")
                 
-                # Preparar parámetros
                 grado_nlgi_param = grado_nlgi if grado_nlgi else None
                 
                 resultados = recomendar_por_filtros(
@@ -902,30 +675,33 @@ def main():
                 )
                 
                 if resultados.empty:
-                    st.warning(" No se encontraron grasas que cumplan con todos los criterios especificados.")
-                    st.info(" Intenta ajustar los filtros para obtener resultados.")
+                    st.warning("No se encontraron grasas que cumplan con todos los criterios especificados.")
+                    st.info(
+                        "Prueba relajando uno de los filtros o contacta a tu asesor Interlub "
+                        "para revisar condiciones especiales de operación."
+                    )
                 else:
-                    st.success(f"OK Se encontraron {len(resultados)} grasa(s) que cumplen los criterios")
+                    st.success(f"Se encontraron {len(resultados)} grasa(s) que cumplen con los criterios definidos.")
                     
-                    # Mostrar criterios de búsqueda
-                    with st.expander(" Criterios de búsqueda aplicados", expanded=True):
+                    with st.expander("Criterios de búsqueda aplicados", expanded=True):
                         criterios = []
                         if grado_nlgi:
-                            criterios.append(f"**NLGI:** {', '.join(map(str, grado_nlgi))}")
+                            criterios.append(f"**Grado NLGI:** {', '.join(map(str, grado_nlgi))}")
                         if temp_min is not None:
-                            criterios.append(f"**Temp. Mín.:** ≤ {temp_min}°C")
+                            criterios.append(f"**Temperatura mínima del equipo:** ≤ {temp_min}°C")
                         if temp_max is not None:
-                            criterios.append(f"**Temp. Máx.:** ≥ {temp_max}°C")
+                            criterios.append(f"**Temperatura máxima del equipo:** ≥ {temp_max}°C")
                         if carga_timken is not None:
-                            criterios.append(f"**Carga Timken:** ≥ {carga_timken} lb")
+                            criterios.append(f"**Carga Timken mínima:** ≥ {carga_timken} lb")
                         if requiere_nsf is not None:
-                            criterios.append(f"**NSF:** {'Sí requiere' if requiere_nsf == 1 else 'No requiere'}")
+                            criterios.append(
+                                f"**NSF:** {'Sí requiere' if requiere_nsf == 1 else 'No requiere'}"
+                            )
                         
                         for criterio in criterios:
                             st.markdown(f"- {criterio}")
                     
-                    # Tabla de resultados
-                    st.subheader(" Grasas Encontradas")
+                    st.subheader("Grasas encontradas")
                     
                     columnas_mostrar = [
                         "codigoGrasa",
@@ -944,28 +720,44 @@ def main():
                     columnas_mostrar = [c for c in columnas_mostrar if c in resultados.columns]
                     display_df = resultados[columnas_mostrar].copy()
                     
+                    display_df = display_df.rename(columns={
+                        "subtitulo": "Descripción corta",
+                        "Grado NLGI Consistencia": "Grado NLGI",
+                        "Punto de Gota, °C": "Punto de gota (°C)",
+                    })
+                    
                     st.dataframe(
                         display_df,
                         use_container_width=True,
                         hide_index=True
                     )
                     
-                    # Visualización de rangos de temperatura
-                    st.subheader(" Rangos de Temperatura")
+                    # ---- RANGOS DE TEMPERATURA CON GRADIENTE FRÍO→CALIENTE ----
+                    st.subheader("Rangos de temperatura")
                     fig = go.Figure()
-                    
-                    colors = ['#CC0000', '#990000', '#660000', '#AA0000', '#880000']
-                    
-                    for idx, row in enumerate(resultados.iterrows()):
-                        i, row = row
-                        color_idx = idx % len(colors)
+
+                    # Para mapear color por temperatura media
+                    global_min = resultados["Temperatura de Servicio °C, min"].min()
+                    global_max = resultados["Temperatura de Servicio °C, max"].max()
+                    temp_range = max(global_max - global_min, 1)
+
+                    for idx, row in resultados.iterrows():
+                        mid_temp = (row["Temperatura de Servicio °C, min"] +
+                                    row["Temperatura de Servicio °C, max"]) / 2.0
+                        t_norm = (mid_temp - global_min) / temp_range  # 0–1
+                        # Escala: azul (frío) → amarillo → rojo (caliente)
+                        color_val = colors.sample_colorscale(
+                            [[0.0, "#005BFF"], [0.5, "#FFD54A"], [1.0, PRIMARY_RED]],
+                            [t_norm]
+                        )[0]
+
                         fig.add_trace(go.Scatter(
                             x=[row["Temperatura de Servicio °C, min"], row["Temperatura de Servicio °C, max"]],
                             y=[row["codigoGrasa"], row["codigoGrasa"]],
                             mode='lines+markers',
                             name=row["codigoGrasa"],
-                            line=dict(width=8, color=colors[color_idx]),
-                            marker=dict(size=10, color=colors[color_idx])
+                            line=dict(width=10, color=color_val),
+                            marker=dict(size=10, color=color_val)
                         ))
                     
                     if temp_min is not None or temp_max is not None:
@@ -978,7 +770,7 @@ def main():
                                 y0=0,
                                 y1=1,
                                 yref="paper",
-                                line=dict(color="#2B2B2B", width=2, dash="dash")
+                                line=dict(color="#005BFF", width=2, dash="dash")
                             ))
                         if temp_max is not None:
                             shapes.append(dict(
@@ -988,133 +780,153 @@ def main():
                                 y0=0,
                                 y1=1,
                                 yref="paper",
-                                line=dict(color="#2B2B2B", width=2, dash="dash")
+                                line=dict(color=PRIMARY_RED, width=2, dash="dash")
                             ))
                         fig.update_layout(shapes=shapes)
                     
                     fig.update_layout(
-                        title="Rangos de Temperatura de Servicio",
+                        title="Rangos de temperatura de servicio",
                         xaxis_title="Temperatura (°C)",
-                        yaxis_title="Código de Grasa",
+                        yaxis_title="Código de grasa",
                         height=400,
                         showlegend=False,
-                        plot_bgcolor='#FFFFFF',
-                        paper_bgcolor='#FFFFFF',
-                        font=dict(color='#2B2B2B', size=12),
-                        title_font=dict(color='#2B2B2B', size=16, family='sans-serif')
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        font_color=DARK_GREY,
+                        title_font_color=DARK_GREY,
                     )
-                    fig.update_xaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
-                    fig.update_yaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
+                    fig.update_xaxes(
+                        color=DARK_GREY,
+                        tickfont=dict(color=DARK_GREY),
+                        title_font=dict(color=DARK_GREY)
+                    )
+                    fig.update_yaxes(
+                        color=DARK_GREY,
+                        tickfont=dict(color=DARK_GREY),
+                        title_font=dict(color=DARK_GREY)
+                    )
                     
                     st.plotly_chart(fig, use_container_width=True)
+                    st.caption(
+                        "Cada línea representa el rango de temperatura recomendado para cada grasa. "
+                        "Los colores más cercanos al rojo indican productos para temperaturas más elevadas."
+                    )
         
         except Exception as e:
-            st.error(f"ERROR Error al procesar la búsqueda: {str(e)}")
+            st.error(f"Error al procesar la búsqueda: {str(e)}")
             st.exception(e)
     
     else:
-        # Pantalla de bienvenida
-        st.header(" ¡Bienvenido!")
+        st.header("¿Cómo quieres buscar tu grasa ideal?")
         
         col1, col2 = st.columns(2)
         
         with col1:
             st.markdown("""
-            ###  Búsqueda por Similitud
+            ### Búsqueda con grasa de referencia
             
-            Encuentra grasas **similares** a una grasa existente en el catálogo.
+            Usa una grasa que ya conoces para encontrar alternativas Interlub con comportamiento similar.
             
-            **Ventajas:**
-            - Usa inteligencia artificial para encontrar productos parecidos
-            - Combina descripción textual y propiedades técnicas
-            - Ideal cuando conoces un producto de referencia
-            
-            **Modos disponibles:**
-            - **Híbrido:** Equilibra texto y números (recomendado)
-            - **Texto:** Solo descripción y aplicaciones
-            - **Numérico:** Solo propiedades técnicas
+            - Ideal para homologar productos  
+            - Útil para sustituir grasas de otro proveedor
             """)
         
         with col2:
             st.markdown("""
-            ###  Búsqueda por Filtros
+            ### Búsqueda por requisitos técnicos
             
-            Busca grasas que cumplan **especificaciones técnicas** exactas.
+            Parte de las condiciones de operación del equipo y filtra por:
             
-            **Ventajas:**
-            - Filtrado preciso por requisitos
-            - Ideal para nuevos proyectos
-            - Múltiples criterios combinables
-            
-            **Filtros disponibles:**
-            - Grado NLGI de consistencia
-            - Rangos de temperatura de servicio
-            - Carga Timken mínima
-            - Certificación NSF (industria alimenticia)
+            - Rango de temperatura  
+            - Grado NLGI  
+            - Carga mínima y registro NSF
             """)
         
-        st.markdown("---")
-        st.subheader(" Distribución del Catálogo")
+        st.subheader("Distribución del catálogo")
         
         col1, col2, col3 = st.columns(3)
         
-        with col1:
-            if "Aceite Base" in df.columns:
+        if "Aceite Base" in df.columns:
+            with col1:
                 fig1 = px.histogram(
                     df.dropna(subset=["Aceite Base"]),
                     x='Aceite Base',
-                    title='Distribución por Aceite Base',
-                    color_discrete_sequence=['#CC0000']
+                    title='Distribución por aceite base',
+                    color_discrete_sequence=[PRIMARY_RED]
                 )
                 fig1.update_layout(
-                    showlegend=False, 
+                    showlegend=False,
                     xaxis_tickangle=-45,
-                    plot_bgcolor='#FFFFFF',
-                    paper_bgcolor='#FFFFFF',
-                    font=dict(color='#2B2B2B', size=11),
-                    title_font=dict(color='#2B2B2B', size=14, family='sans-serif')
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    font_color=DARK_GREY,
+                    title_font_color=DARK_GREY,
                 )
-                fig1.update_xaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
-                fig1.update_yaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
+                fig1.update_xaxes(
+                    color=DARK_GREY,
+                    tickfont=dict(color=DARK_GREY),
+                    title_font=dict(color=DARK_GREY)
+                )
+                fig1.update_yaxes(
+                    color=DARK_GREY,
+                    tickfont=dict(color=DARK_GREY),
+                    title_font=dict(color=DARK_GREY)
+                )
                 st.plotly_chart(fig1, use_container_width=True)
         
-        with col2:
-            if "Espesante" in df.columns:
+        if "Espesante" in df.columns:
+            with col2:
                 fig2 = px.histogram(
                     df.dropna(subset=["Espesante"]),
                     x='Espesante',
-                    title='Distribución por Espesante',
-                    color_discrete_sequence=['#990000']
+                    title='Distribución por espesante',
+                    color_discrete_sequence=[PRIMARY_RED]
                 )
                 fig2.update_layout(
-                    showlegend=False, 
+                    showlegend=False,
                     xaxis_tickangle=-45,
-                    plot_bgcolor='#FFFFFF',
-                    paper_bgcolor='#FFFFFF',
-                    font=dict(color='#2B2B2B', size=11),
-                    title_font=dict(color='#2B2B2B', size=14, family='sans-serif')
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    font_color=DARK_GREY,
+                    title_font_color=DARK_GREY,
                 )
-                fig2.update_xaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
-                fig2.update_yaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
+                fig2.update_xaxes(
+                    color=DARK_GREY,
+                    tickfont=dict(color=DARK_GREY),
+                    title_font=dict(color=DARK_GREY)
+                )
+                fig2.update_yaxes(
+                    color=DARK_GREY,
+                    tickfont=dict(color=DARK_GREY),
+                    title_font=dict(color=DARK_GREY)
+                )
                 st.plotly_chart(fig2, use_container_width=True)
         
-        with col3:
-            if "Grado NLGI Consistencia" in df.columns:
+        if "Grado NLGI Consistencia" in df.columns:
+            with col3:
                 fig3 = px.histogram(
                     df,
                     x='Grado NLGI Consistencia',
-                    title='Distribución por Grado NLGI',
-                    color_discrete_sequence=['#660000']
+                    title='Distribución por grado NLGI',
+                    color_discrete_sequence=[PRIMARY_RED]
                 )
                 fig3.update_layout(
                     showlegend=False,
-                    plot_bgcolor='#FFFFFF',
-                    paper_bgcolor='#FFFFFF',
-                    font=dict(color='#2B2B2B', size=11),
-                    title_font=dict(color='#2B2B2B', size=14, family='sans-serif')
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    font_color=DARK_GREY,
+                    title_font_color=DARK_GREY,
                 )
-                fig3.update_xaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
-                fig3.update_yaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
+                fig3.update_xaxes(
+                    color=DARK_GREY,
+                    tickfont=dict(color=DARK_GREY),
+                    title_font=dict(color=DARK_GREY)
+                )
+                fig3.update_yaxes(
+                    color=DARK_GREY,
+                    tickfont=dict(color=DARK_GREY),
+                    title_font=dict(color=DARK_GREY)
+                )
                 st.plotly_chart(fig3, use_container_width=True)
 
 
