@@ -19,9 +19,401 @@ except LookupError:
 # Configurar la página
 st.set_page_config(
     page_title="Recomendador Inteligente de Grasas Interlub",
-    page_icon="🛢️",
+    page_icon="⚙",
     layout="wide"
 )
+
+# Aplicar CSS personalizado
+st.markdown("""
+    <style>
+    /* Forzar fondo blanco en toda la aplicación */
+    .stApp {
+        background-color: #FFFFFF !important;
+    }
+    
+    .main {
+        background-color: #FFFFFF !important;
+    }
+    
+    .block-container {
+        background-color: #FFFFFF !important;
+    }
+    
+    /* Colores principales */
+    :root {
+        --primary-color: #CC0000;
+        --background-color: #FFFFFF;
+        --secondary-bg: #F0F0F0;
+        --text-color: #2B2B2B;
+        --text-light: #666666;
+    }
+    
+    /* Botones principales */
+    .stButton>button {
+        background-color: #CC0000 !important;
+        color: #FFFFFF !important;
+        border: 2px solid #CC0000 !important;
+        border-radius: 8px !important;
+        padding: 0.6rem 1.5rem !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 2px 4px rgba(204, 0, 0, 0.2) !important;
+    }
+    
+    .stButton>button:hover {
+        background-color: #990000 !important;
+        border-color: #990000 !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 4px 8px rgba(204, 0, 0, 0.3) !important;
+        transform: translateY(-1px) !important;
+    }
+    
+    .stButton>button:active {
+        background-color: #660000 !important;
+        transform: translateY(0) !important;
+    }
+    
+    /* Headers */
+    h1, h2, h3, h4, h5, h6 {
+        color: #2B2B2B !important;
+        font-weight: 600 !important;
+    }
+    
+    h1 {
+        border-bottom: 4px solid #CC0000 !important;
+        padding-bottom: 15px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    h2 {
+        color: #2B2B2B !important;
+        margin-top: 1.5rem !important;
+        font-size: 1.5rem !important;
+    }
+    
+    h3 {
+        color: #2B2B2B !important;
+        font-size: 1.25rem !important;
+    }
+    
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: #F8F8F8 !important;
+        border-right: 1px solid #E0E0E0 !important;
+    }
+    
+    [data-testid="stSidebar"] h1, 
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3 {
+        color: #2B2B2B !important;
+        font-weight: 600 !important;
+    }
+    
+    [data-testid="stSidebar"] label {
+        color: #2B2B2B !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+    }
+    
+    [data-testid="stSidebar"] p {
+        color: #2B2B2B !important;
+    }
+    
+    /* Métricas */
+    [data-testid="stMetricValue"] {
+        color: #CC0000 !important;
+        font-weight: 700 !important;
+        font-size: 2rem !important;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        color: #2B2B2B !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+    
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px !important;
+        background-color: #FFFFFF !important;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background-color: #F0F0F0 !important;
+        color: #2B2B2B !important;
+        border-radius: 8px 8px 0 0 !important;
+        font-weight: 600 !important;
+        padding: 12px 24px !important;
+        border: 2px solid transparent !important;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background-color: #CC0000 !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        border: 2px solid #CC0000 !important;
+    }
+    
+    /* Selectbox y inputs */
+    .stSelectbox label, 
+    .stNumberInput label, 
+    .stMultiSelect label,
+    .stTextInput label,
+    .stSlider label {
+        color: #2B2B2B !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .stSelectbox div[data-baseweb="select"] {
+        background-color: #FFFFFF !important;
+        border: 2px solid #E0E0E0 !important;
+        border-radius: 6px !important;
+    }
+    
+    .stSelectbox div[data-baseweb="select"]:hover {
+        border-color: #CC0000 !important;
+    }
+    
+    .stSelectbox div[data-baseweb="select"] > div {
+        color: #2B2B2B !important;
+        font-weight: 500 !important;
+    }
+    
+    /* Number input */
+    .stNumberInput input {
+        color: #2B2B2B !important;
+        background-color: #FFFFFF !important;
+        border: 2px solid #E0E0E0 !important;
+        border-radius: 6px !important;
+        font-weight: 500 !important;
+    }
+    
+    .stNumberInput input:focus {
+        border-color: #CC0000 !important;
+        box-shadow: 0 0 0 1px #CC0000 !important;
+    }
+    
+    /* Dataframes */
+    .dataframe {
+        border: 2px solid #E0E0E0 !important;
+        color: #2B2B2B !important;
+        background-color: #FFFFFF !important;
+        border-radius: 8px !important;
+        overflow: hidden !important;
+    }
+    
+    .dataframe th {
+        background-color: #F8F8F8 !important;
+        color: #2B2B2B !important;
+        font-weight: 700 !important;
+        padding: 12px !important;
+        border-bottom: 2px solid #E0E0E0 !important;
+    }
+    
+    .dataframe td {
+        color: #2B2B2B !important;
+        padding: 10px !important;
+        background-color: #FFFFFF !important;
+    }
+    
+    .dataframe tr:hover {
+        background-color: #FFF5F5 !important;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        background-color: #F8F8F8 !important;
+        color: #2B2B2B !important;
+        border-left: 4px solid #CC0000 !important;
+        font-weight: 600 !important;
+        border-radius: 6px !important;
+        padding: 12px !important;
+    }
+    
+    .streamlit-expanderHeader:hover {
+        background-color: #F0F0F0 !important;
+    }
+    
+    .streamlit-expanderContent {
+        background-color: #FFFFFF !important;
+        color: #2B2B2B !important;
+        border: 1px solid #E0E0E0 !important;
+        border-top: none !important;
+        padding: 15px !important;
+    }
+    
+    /* Info boxes */
+    .stAlert {
+        color: #2B2B2B !important;
+        border-radius: 8px !important;
+        padding: 15px !important;
+        font-weight: 500 !important;
+    }
+    
+    div[data-baseweb="notification"] {
+        background-color: #F8F8F8 !important;
+        color: #2B2B2B !important;
+        border-left: 4px solid #CC0000 !important;
+        border-radius: 6px !important;
+    }
+    
+    /* Radio buttons */
+    .stRadio > label {
+        color: #2B2B2B !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .stRadio label[data-baseweb="radio"] span {
+        color: #2B2B2B !important;
+        font-weight: 500 !important;
+    }
+    
+    .stRadio [data-baseweb="radio"] > div:first-child {
+        border-color: #CC0000 !important;
+    }
+    
+    /* Slider */
+    .stSlider label {
+        color: #2B2B2B !important;
+        font-weight: 600 !important;
+    }
+    
+    .stSlider [data-baseweb="slider"] [role="slider"] {
+        background-color: #CC0000 !important;
+    }
+    
+    .stSlider [data-baseweb="slider"] {
+        background: linear-gradient(to right, #CC0000 0%, #CC0000 var(--value), #E0E0E0 var(--value), #E0E0E0 100%) !important;
+    }
+    
+    /* Links */
+    a {
+        color: #CC0000 !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+    }
+    
+    a:hover {
+        color: #990000 !important;
+        text-decoration: underline !important;
+    }
+    
+    /* Mensajes */
+    .stWarning {
+        background-color: #FFF8E1 !important;
+        color: #2B2B2B !important;
+        border-left: 4px solid #FFA000 !important;
+        border-radius: 6px !important;
+        padding: 15px !important;
+    }
+    
+    .stSuccess {
+        background-color: #F1F8E9 !important;
+        color: #2B2B2B !important;
+        border-left: 4px solid #66BB6A !important;
+        border-radius: 6px !important;
+        padding: 15px !important;
+    }
+    
+    .stError {
+        background-color: #FFEBEE !important;
+        color: #2B2B2B !important;
+        border-left: 4px solid #EF5350 !important;
+        border-radius: 6px !important;
+        padding: 15px !important;
+    }
+    
+    .stInfo {
+        background-color: #E3F2FD !important;
+        color: #2B2B2B !important;
+        border-left: 4px solid #42A5F5 !important;
+        border-radius: 6px !important;
+        padding: 15px !important;
+    }
+    
+    /* Texto general */
+    p, span, div, li {
+        color: #2B2B2B !important;
+    }
+    
+    /* Markdown */
+    .stMarkdown {
+        color: #2B2B2B !important;
+    }
+    
+    /* JSON display */
+    .stJson {
+        background-color: #F8F8F8 !important;
+        color: #2B2B2B !important;
+        border: 1px solid #E0E0E0 !important;
+        border-radius: 6px !important;
+        padding: 15px !important;
+    }
+    
+    /* Code blocks */
+    code {
+        background-color: #F8F8F8 !important;
+        color: #CC0000 !important;
+        padding: 3px 6px !important;
+        border-radius: 4px !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Multi-select */
+    .stMultiSelect label {
+        color: #2B2B2B !important;
+        font-weight: 600 !important;
+    }
+    
+    .stMultiSelect div[data-baseweb="tag"] {
+        background-color: #CC0000 !important;
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+        border-radius: 4px !important;
+    }
+    
+    /* Divider */
+    hr {
+        border-color: #E0E0E0 !important;
+        border-width: 2px !important;
+        margin: 2rem 0 !important;
+    }
+    
+    /* Tooltips */
+    [data-baseweb="tooltip"] {
+        background-color: #2B2B2B !important;
+        color: #FFFFFF !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+    }
+    
+    /* Placeholder text */
+    ::placeholder {
+        color: #999999 !important;
+    }
+    
+    /* Disabled elements */
+    :disabled {
+        color: #CCCCCC !important;
+        background-color: #F5F5F5 !important;
+    }
+    
+    /* Líneas de separación */
+    [data-testid="stHorizontalBlock"] {
+        background-color: #FFFFFF !important;
+    }
+    
+    /* Columnas */
+    [data-testid="column"] {
+        background-color: #FFFFFF !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # ==================== FUNCIONES DE CARGA Y PREPROCESAMIENTO ====================
 
@@ -273,17 +665,17 @@ def recomendar_por_filtros(
 
 def main():
     # Título principal
-    st.title("🛢️ Recomendador Inteligente de Grasas Interlub")
+    st.title("Recomendador Inteligente de Grasas Interlub")
     st.markdown("---")
     
     # Cargar datos
     # NOTA: Cambiar esta ruta por la ubicación de tu archivo CSV
-    csv_path = "datos_grasas_Tec_limpio.csv" # Modificar según tu estructura
+    csv_path = "datos_grasas_Tec_limpio.csv"  # Modificar según tu estructura
     
     data_dict = load_and_preprocess_data(csv_path)
     
     if data_dict is None:
-        st.error("⚠️ No se pudieron cargar los datos. Verifica la ruta del archivo CSV.")
+        st.error(" No se pudieron cargar los datos. Verifica la ruta del archivo CSV.")
         st.info("Coloca tu archivo 'datos_grasas_Tec_limpio.csv' en el mismo directorio que este script.")
         return
     
@@ -292,7 +684,7 @@ def main():
     
     # ===== SIDEBAR =====
     with st.sidebar:
-        st.header("🔍 Método de Búsqueda")
+        st.header("Método de Búsqueda")
         
         metodo_busqueda = st.radio(
             "Selecciona el método:",
@@ -304,7 +696,7 @@ def main():
         
         # ===== BÚSQUEDA POR SIMILITUD =====
         if metodo_busqueda == "Búsqueda por Similitud":
-            st.subheader("🎯 Configuración de Similitud")
+            st.subheader("Configuración de Similitud")
             
             # Seleccionar grasa de referencia
             grasa_referencia = st.selectbox(
@@ -345,14 +737,14 @@ def main():
             )
             
             buscar_btn = st.button(
-                "🚀 Buscar Similares",
+                " Buscar Similares",
                 use_container_width=True,
                 type="primary"
             )
             
         # ===== BÚSQUEDA POR FILTROS =====
         else:
-            st.subheader("⚙️ Especificaciones Técnicas")
+            st.subheader(" Especificaciones Técnicas")
             
             # NLGI
             grado_nlgi_options = sorted(df["Grado NLGI Consistencia"].dropna().unique())
@@ -408,7 +800,7 @@ def main():
         
         # Estadísticas
         st.markdown("---")
-        st.header("📊 Estadísticas")
+        st.header(" Estadísticas")
         st.metric("Grasas en catálogo", len(df))
         st.metric("Características", len(df.columns))
     
@@ -418,7 +810,7 @@ def main():
         try:
             if metodo_busqueda == "Búsqueda por Similitud":
                 # Ejecutar búsqueda por similitud
-                st.header(f"🎯 Grasas Similares a: {grasa_referencia}")
+                st.header(f" Grasas Similares a: {grasa_referencia}")
                 
                 recomendaciones = recomendar_grasas_hibrido(
                     codigo_grasa=grasa_referencia,
@@ -430,7 +822,7 @@ def main():
                 )
                 
                 # Mostrar grasa de referencia
-                with st.expander("📋 Ver detalles de la grasa de referencia", expanded=True):
+                with st.expander(" Ver detalles de la grasa de referencia", expanded=True):
                     ref_data = df[df["codigoGrasa"] == grasa_referencia].iloc[0]
                     col1, col2, col3 = st.columns(3)
                     
@@ -445,7 +837,7 @@ def main():
                         st.metric("Temp. Máx.", f"{ref_data.get('Temperatura de Servicio °C, max', 0)}°C")
                 
                 # Gráfico de similitudes
-                st.subheader("📊 Nivel de Similitud")
+                st.subheader("Nivel de Similitud")
                 fig = px.bar(
                     recomendaciones,
                     x='Similitud',
@@ -454,13 +846,21 @@ def main():
                     title=f'Top {top_n} Grasas Más Similares (Modo: {modo_similitud})',
                     labels={'codigoGrasa': 'Código', 'Similitud': 'Similitud'},
                     color='Similitud',
-                    color_continuous_scale='Blues'
+                    color_continuous_scale=['#FFE5E5', '#CC0000', '#660000']
                 )
-                fig.update_layout(yaxis={'categoryorder':'total ascending'})
+                fig.update_layout(
+                    yaxis={'categoryorder':'total ascending'},
+                    plot_bgcolor='#FFFFFF',
+                    paper_bgcolor='#FFFFFF',
+                    font=dict(color='#2B2B2B', size=12),
+                    title_font=dict(color='#2B2B2B', size=16, family='sans-serif')
+                )
+                fig.update_xaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
+                fig.update_yaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
                 st.plotly_chart(fig, use_container_width=True)
                 
                 # Tabla de resultados
-                st.subheader("📋 Detalles de las Recomendaciones")
+                st.subheader(" Detalles de las Recomendaciones")
                 
                 columnas_mostrar = [
                     'codigoGrasa', 'Similitud', 'subtitulo',
@@ -486,7 +886,7 @@ def main():
                 )
                 
             else:  # Búsqueda por filtros
-                st.header("⚙️ Resultados de Búsqueda por Filtros")
+                st.header(" Resultados de Búsqueda por Filtros")
                 
                 # Preparar parámetros
                 grado_nlgi_param = grado_nlgi if grado_nlgi else None
@@ -502,13 +902,13 @@ def main():
                 )
                 
                 if resultados.empty:
-                    st.warning("⚠️ No se encontraron grasas que cumplan con todos los criterios especificados.")
-                    st.info("💡 Intenta ajustar los filtros para obtener resultados.")
+                    st.warning(" No se encontraron grasas que cumplan con todos los criterios especificados.")
+                    st.info(" Intenta ajustar los filtros para obtener resultados.")
                 else:
-                    st.success(f"✅ Se encontraron {len(resultados)} grasa(s) que cumplen los criterios")
+                    st.success(f"OK Se encontraron {len(resultados)} grasa(s) que cumplen los criterios")
                     
                     # Mostrar criterios de búsqueda
-                    with st.expander("🔍 Criterios de búsqueda aplicados", expanded=True):
+                    with st.expander(" Criterios de búsqueda aplicados", expanded=True):
                         criterios = []
                         if grado_nlgi:
                             criterios.append(f"**NLGI:** {', '.join(map(str, grado_nlgi))}")
@@ -525,7 +925,7 @@ def main():
                             st.markdown(f"- {criterio}")
                     
                     # Tabla de resultados
-                    st.subheader("📋 Grasas Encontradas")
+                    st.subheader(" Grasas Encontradas")
                     
                     columnas_mostrar = [
                         "codigoGrasa",
@@ -551,17 +951,21 @@ def main():
                     )
                     
                     # Visualización de rangos de temperatura
-                    st.subheader("🌡️ Rangos de Temperatura")
+                    st.subheader(" Rangos de Temperatura")
                     fig = go.Figure()
                     
-                    for idx, row in resultados.iterrows():
+                    colors = ['#CC0000', '#990000', '#660000', '#AA0000', '#880000']
+                    
+                    for idx, row in enumerate(resultados.iterrows()):
+                        i, row = row
+                        color_idx = idx % len(colors)
                         fig.add_trace(go.Scatter(
                             x=[row["Temperatura de Servicio °C, min"], row["Temperatura de Servicio °C, max"]],
                             y=[row["codigoGrasa"], row["codigoGrasa"]],
                             mode='lines+markers',
                             name=row["codigoGrasa"],
-                            line=dict(width=8),
-                            marker=dict(size=10)
+                            line=dict(width=8, color=colors[color_idx]),
+                            marker=dict(size=10, color=colors[color_idx])
                         ))
                     
                     if temp_min is not None or temp_max is not None:
@@ -574,7 +978,7 @@ def main():
                                 y0=0,
                                 y1=1,
                                 yref="paper",
-                                line=dict(color="red", width=2, dash="dash")
+                                line=dict(color="#2B2B2B", width=2, dash="dash")
                             ))
                         if temp_max is not None:
                             shapes.append(dict(
@@ -584,7 +988,7 @@ def main():
                                 y0=0,
                                 y1=1,
                                 yref="paper",
-                                line=dict(color="red", width=2, dash="dash")
+                                line=dict(color="#2B2B2B", width=2, dash="dash")
                             ))
                         fig.update_layout(shapes=shapes)
                     
@@ -593,24 +997,30 @@ def main():
                         xaxis_title="Temperatura (°C)",
                         yaxis_title="Código de Grasa",
                         height=400,
-                        showlegend=False
+                        showlegend=False,
+                        plot_bgcolor='#FFFFFF',
+                        paper_bgcolor='#FFFFFF',
+                        font=dict(color='#2B2B2B', size=12),
+                        title_font=dict(color='#2B2B2B', size=16, family='sans-serif')
                     )
+                    fig.update_xaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
+                    fig.update_yaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
                     
                     st.plotly_chart(fig, use_container_width=True)
         
         except Exception as e:
-            st.error(f"❌ Error al procesar la búsqueda: {str(e)}")
+            st.error(f"ERROR Error al procesar la búsqueda: {str(e)}")
             st.exception(e)
     
     else:
         # Pantalla de bienvenida
-        st.header("👋 ¡Bienvenido!")
+        st.header(" ¡Bienvenido!")
         
         col1, col2 = st.columns(2)
         
         with col1:
             st.markdown("""
-            ### 🎯 Búsqueda por Similitud
+            ###  Búsqueda por Similitud
             
             Encuentra grasas **similares** a una grasa existente en el catálogo.
             
@@ -627,7 +1037,7 @@ def main():
         
         with col2:
             st.markdown("""
-            ### ⚙️ Búsqueda por Filtros
+            ###  Búsqueda por Filtros
             
             Busca grasas que cumplan **especificaciones técnicas** exactas.
             
@@ -644,7 +1054,7 @@ def main():
             """)
         
         st.markdown("---")
-        st.subheader("📈 Distribución del Catálogo")
+        st.subheader(" Distribución del Catálogo")
         
         col1, col2, col3 = st.columns(3)
         
@@ -654,9 +1064,18 @@ def main():
                     df.dropna(subset=["Aceite Base"]),
                     x='Aceite Base',
                     title='Distribución por Aceite Base',
-                    color_discrete_sequence=['#1f77b4']
+                    color_discrete_sequence=['#CC0000']
                 )
-                fig1.update_layout(showlegend=False, xaxis_tickangle=-45)
+                fig1.update_layout(
+                    showlegend=False, 
+                    xaxis_tickangle=-45,
+                    plot_bgcolor='#FFFFFF',
+                    paper_bgcolor='#FFFFFF',
+                    font=dict(color='#2B2B2B', size=11),
+                    title_font=dict(color='#2B2B2B', size=14, family='sans-serif')
+                )
+                fig1.update_xaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
+                fig1.update_yaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
                 st.plotly_chart(fig1, use_container_width=True)
         
         with col2:
@@ -665,9 +1084,18 @@ def main():
                     df.dropna(subset=["Espesante"]),
                     x='Espesante',
                     title='Distribución por Espesante',
-                    color_discrete_sequence=['#ff7f0e']
+                    color_discrete_sequence=['#990000']
                 )
-                fig2.update_layout(showlegend=False, xaxis_tickangle=-45)
+                fig2.update_layout(
+                    showlegend=False, 
+                    xaxis_tickangle=-45,
+                    plot_bgcolor='#FFFFFF',
+                    paper_bgcolor='#FFFFFF',
+                    font=dict(color='#2B2B2B', size=11),
+                    title_font=dict(color='#2B2B2B', size=14, family='sans-serif')
+                )
+                fig2.update_xaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
+                fig2.update_yaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
                 st.plotly_chart(fig2, use_container_width=True)
         
         with col3:
@@ -676,9 +1104,17 @@ def main():
                     df,
                     x='Grado NLGI Consistencia',
                     title='Distribución por Grado NLGI',
-                    color_discrete_sequence=['#2ca02c']
+                    color_discrete_sequence=['#660000']
                 )
-                fig3.update_layout(showlegend=False)
+                fig3.update_layout(
+                    showlegend=False,
+                    plot_bgcolor='#FFFFFF',
+                    paper_bgcolor='#FFFFFF',
+                    font=dict(color='#2B2B2B', size=11),
+                    title_font=dict(color='#2B2B2B', size=14, family='sans-serif')
+                )
+                fig3.update_xaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
+                fig3.update_yaxes(gridcolor='#E0E0E0', title_font=dict(color='#2B2B2B'))
                 st.plotly_chart(fig3, use_container_width=True)
 
 
